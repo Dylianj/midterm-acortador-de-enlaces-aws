@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acortador de Enlaces</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result, .error {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            word-break: break-all;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .copy-btn {
+            background-color: #28a745;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Acortador de URL</h2>
+    <form id="shorten-form">
+        <input type="url" id="original-url" placeholder="https://ejemplo.com" required>
+        <button type="submit">Acortar Enlace</button>
+    </form>
+
+    <div id="error-message" class="error"></div>
+    
+    <div id="result-container" class="result">
+        <p><strong>Tu enlace corto:</strong></p>
+        <a id="short-url" href="#" target="_blank"></a>
+        <button id="copy-btn" class="copy-btn">Copiar Enlace</button>
+    </div>
+</div>
+
+<script>
+    // IMPORTANTE: Cambiar esta URL por http://<IP_PUBLICA_EC2>:8000 cuando se despliegue el backend
+    const API_URL = 'http://localhost:8000/shorten';
+
+    document.getElementById('shorten-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const originalUrl = document.getElementById('original-url').value;
+        const resultContainer = document.getElementById('result-container');
+        const shortUrlElement = document.getElementById('short-url');
+        const errorElement = document.getElementById('error-message');
+        
+        resultContainer.style.display = 'none';
+        errorElement.style.display = 'none';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ original_url: originalUrl })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en el servidor o URL inválida');
+            }
+
+            const data = await response.json();
+            
+            shortUrlElement.href = data.short_url;
+            shortUrlElement.textContent = data.short_url;
+            resultContainer.style.display = 'block';
+
+        } catch (error) {
+            errorElement.textContent = "Error de conexión: Verifica que el backend esté en ejecución.";
+            errorElement.style.display = 'block';
+        }
+    });
+
+    document.getElementById('copy-btn').addEventListener('click', () => {
+        const urlToCopy = document.getElementById('short-url').textContent;
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            alert('¡Enlace copiado al portapapeles!');
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+        });
+    });
+</script>
+
+</body>
+</html>
