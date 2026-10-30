@@ -1,0 +1,3 @@
+fastapi [Standard]
+boto3
+uvicorn
